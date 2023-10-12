@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::fmt;
 use std::slice;
 use std::str;
+use std::sync::RwLock;
 
 use if_chain::if_chain;
 
@@ -139,7 +140,7 @@ impl<'a> Iterator for Lines<'a> {
 /// operations.
 pub struct SourceView<'a> {
     source: Cow<'a, str>,
-    processed_until: RefCell<usize>,
+    processed_until: RwLock<usize>,
     lines: RefCell<Vec<(*const u8, usize)>>,
 }
 
@@ -149,7 +150,7 @@ impl<'a> Clone for SourceView<'a> {
     fn clone(&self) -> SourceView<'a> {
         SourceView {
             source: self.source.clone(),
-            processed_until: RefCell::new(0),
+            processed_until: RwLock::new(0),
             lines: RefCell::new(vec![]),
         }
     }
@@ -173,7 +174,7 @@ impl<'a> SourceView<'a> {
     pub fn new(source: &'a str) -> SourceView<'a> {
         SourceView {
             source: Cow::Borrowed(source),
-            processed_until: RefCell::new(0),
+            processed_until: RwLock::new(0),
             lines: RefCell::new(vec![]),
         }
     }
@@ -182,7 +183,7 @@ impl<'a> SourceView<'a> {
     pub fn from_string(source: String) -> SourceView<'static> {
         SourceView {
             source: Cow::Owned(source),
-            processed_until: RefCell::new(0),
+            processed_until: RwLock::new(0),
             lines: RefCell::new(vec![]),
         }
     }
@@ -198,11 +199,11 @@ impl<'a> SourceView<'a> {
         }
 
         // fetched everything
-        if *self.processed_until.borrow() > self.source.len() {
+        if *self.processed_until.read().unwrap() > self.source.len() {
             return None;
         }
 
-        let mut processed_until = self.processed_until.borrow_mut();
+        let mut processed_until = self.processed_until.write().unwrap();
         let mut lines = self.lines.borrow_mut();
         let mut done = false;
 
