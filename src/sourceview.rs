@@ -144,6 +144,7 @@ pub struct SourceView<'a> {
     lines: RefCell<Vec<(*const u8, usize)>>,
 }
 
+unsafe impl Sync for SourceView<'_> {}
 unsafe impl Send for SourceView<'_> {}
 
 impl<'a> Clone for SourceView<'a> {
